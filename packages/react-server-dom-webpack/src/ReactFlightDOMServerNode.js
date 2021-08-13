@@ -42,10 +42,16 @@ function pipeToNodeWritable(
   startWork(request);
 }
 
-function handleServerFunctions(req, res) {
-  console.log(serverFunctionCache, serverFunctionCache.get(req.params.fnId))
-  res.writeHead(200)
-  res.end()
+function handleServerFunctions(req, res, next) {
+  const fn = serverFunctionCache.get(req.params.fnId)
+  console.log(serverFunctionCache, fn)
+  if (fn) {
+    fn();
+    res.writeHead(200)
+    res.end()
+  }
+
+  next()
 }
 
 export {pipeToNodeWritable, handleServerFunctions};

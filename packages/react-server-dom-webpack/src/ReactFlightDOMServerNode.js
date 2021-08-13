@@ -42,22 +42,29 @@ function pipeToNodeWritable(
   startWork(request);
 }
 
-function handleServerFunctions(req, res, next) {
-  const fn = serverFunctionCache.get(req.params.fnId)
-  if (fn) {
-    const success = (result) => {
-      res.writeHead(200)
-      res.end(JSON.stringify(result))
-    }
-
-    const result = fn(...req.body)
-    if (result && result.then) {
-      result.then(success);
+function handleServerFunctions(sendResponse) {
+  return function (req, res, next) {
+    const fn = serverFunctionCache.get(req.params.fnId)
+    if (fn) {
+      const success = (result) => {
+        res.writeHead(200)
+        res.end(JSON.stringify(result))
+      }
+  
+      const result = fn(
+        ...req.body,
+        (props) => {
+          sendResponse(props, res)
+        },
+      )
+      if (result && result.then) {
+        result.then(success);
+      } else {
+        success(result);
+      }
     } else {
-      success(result);
+      next()
     }
-  } else {
-    next()
   }
 }
 

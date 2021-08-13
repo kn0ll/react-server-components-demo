@@ -405,9 +405,7 @@ export function resolveServerFunction(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(args)
-      }).then(
-        (res) => res.json().then(resolve)
-      )
+      }).then(resolve)
     })
   }
 

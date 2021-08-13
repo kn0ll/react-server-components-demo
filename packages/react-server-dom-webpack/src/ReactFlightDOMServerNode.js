@@ -46,21 +46,11 @@ function handleServerFunctions(sendResponse) {
   return function (req, res, next) {
     const fn = serverFunctionCache.get(req.params.fnId)
     if (fn) {
-      const success = (result) => {
-        res.writeHead(200)
-        res.end(JSON.stringify(result))
-      }
-  
-      const result = fn(
-        ...req.body,
-        (props) => {
-          sendResponse(props, res)
-        },
-      )
+      const result = fn(...req.body)
       if (result && result.then) {
-        result.then(success);
+        result.then((props) => sendResponse(props, res));
       } else {
-        success(result);
+        sendResponse(result, res)
       }
     } else {
       next()

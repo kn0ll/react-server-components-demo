@@ -119,6 +119,16 @@ export function processSymbolChunk(
   return stringToChunk(row);
 }
 
+export function processServerFunctionChunk(
+  request: Request,
+  id: number,
+  path: string,
+): Chunk {
+  const json = stringify(path);
+  const row = serializeRowHeader('F', id) + json + '\n';
+  return stringToChunk(row);
+}
+
 export {
   scheduleWork,
   flushBuffered,

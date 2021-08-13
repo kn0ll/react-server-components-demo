@@ -28,6 +28,7 @@ import {
   processModelChunk,
   processModuleChunk,
   processSymbolChunk,
+  processServerFunctionChunk,
   processErrorChunk,
   resolveModuleMetaData,
   getModuleKey,
@@ -81,6 +82,7 @@ export type Request = {
   completedModuleChunks: Array<Chunk>,
   completedJSONChunks: Array<Chunk>,
   completedErrorChunks: Array<Chunk>,
+  writtenServerFunctions: WeakMap<Function, number>,
   writtenSymbols: Map<Symbol, number>,
   writtenModules: Map<ModuleKey, number>,
   onError: (error: mixed) => void,
@@ -111,6 +113,7 @@ export function createRequest(
     completedModuleChunks: [],
     completedJSONChunks: [],
     completedErrorChunks: [],
+    writtenServerFunctions: new WeakMap(),
     writtenSymbols: new Map(),
     writtenModules: new Map(),
     onError: onError === undefined ? defaultErrorHandler : onError,
@@ -197,6 +200,10 @@ function createSegment(request: Request, model: ReactModel): Segment {
   return segment;
 }
 
+function serializeByServerFunctionID(id: number): string {
+  return '!' + id.toString(16);
+}
+
 function serializeByValueID(id: number): string {
   return '$' + id.toString(16);
 }
@@ -206,7 +213,7 @@ function serializeByRefID(id: number): string {
 }
 
 function escapeStringValue(value: string): string {
-  if (value[0] === '$' || value[0] === '@') {
+  if (value[0] === '$' || value[0] === '@' || value[0] === '!') {
     // We need to escape $ or @ prefixed strings since we use those to encode
     // references to IDs and as special symbol values.
     return '$' + value;
@@ -530,26 +537,17 @@ export function resolveModelToJSON(
   }
 
   if (typeof value === 'function') {
-    if (/^on[A-Z]/.test(key)) {
-      invariant(
-        false,
-        'Event handlers cannot be passed to client component props. ' +
-          'Remove %s from these props if possible: %s\n' +
-          'If you need interactivity, consider converting part of this to a client component.',
-        describeKeyForErrorMessage(key),
-        describeObjectForErrorMessage(parent),
-      );
-    } else {
-      invariant(
-        false,
-        'Functions cannot be passed directly to client components ' +
-          "because they're not serializable. " +
-          'Remove %s (%s) from this object, or avoid the entire object: %s',
-        describeKeyForErrorMessage(key),
-        value.displayName || value.name || 'function',
-        describeObjectForErrorMessage(parent),
-      );
+    const writtenServerFunctions = request.writtenServerFunctions;
+    const existingId = writtenServerFunctions.get(value);
+    if (existingId !== undefined) {
+      return serializeByServerFunctionID(existingId);
     }
+    const path = `/rpc/${Math.random()}`
+    request.pendingChunks++;
+    const serverFunctionId = request.nextChunkId++;
+    emitServerFunctionChunk(request, serverFunctionId, path);
+    writtenServerFunctions.set(value, serverFunctionId);
+    return serializeByServerFunctionID(serverFunctionId);
   }
 
   if (typeof value === 'symbol') {
@@ -639,6 +637,11 @@ function emitModuleChunk(
 
 function emitSymbolChunk(request: Request, id: number, name: string): void {
   const processedChunk = processSymbolChunk(request, id, name);
+  request.completedModuleChunks.push(processedChunk);
+}
+
+function emitServerFunctionChunk(request: Request, id: number, path: string): void {
+  const processedChunk = processServerFunctionChunk(request, id, path);
   request.completedModuleChunks.push(processedChunk);
 }
 

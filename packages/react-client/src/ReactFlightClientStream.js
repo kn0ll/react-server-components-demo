@@ -13,6 +13,7 @@ import {
   resolveModule,
   resolveModel,
   resolveSymbol,
+  resolveServerFunction,
   resolveError,
   createResponse as createResponseBase,
   parseModelString,
@@ -51,6 +52,10 @@ function processFullRow(response: Response, row: string): void {
     }
     case 'S': {
       resolveSymbol(response, id, JSON.parse(text));
+      return;
+    }
+    case 'F': {
+      resolveServerFunction(response, id, JSON.parse(text));
       return;
     }
     case 'E': {

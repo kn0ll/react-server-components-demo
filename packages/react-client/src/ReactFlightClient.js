@@ -299,10 +299,11 @@ export function parseModelString(
   value: string,
 ): any {
   switch (value[0]) {
+    case '!':
     case '$': {
       if (value === '$') {
         return REACT_ELEMENT_TYPE;
-      } else if (value[1] === '$' || value[1] === '@') {
+      } else if (value[1] === '$' || value[1] === '@' || value[1] === '!') {
         // This was an escaped string value.
         return value.substring(1);
       } else {
@@ -389,6 +390,17 @@ export function resolveSymbol(
   // We assume that we'll always emit the symbol before anything references it
   // to save a few bytes.
   chunks.set(id, createInitializedChunk(response, Symbol.for(name)));
+}
+
+export function resolveServerFunction(
+  response: Response,
+  id: number,
+  path: string,
+): void {
+  const chunks = response._chunks;
+  // We assume that we'll always emit the server function before anything references it
+  // to save a few bytes.
+  chunks.set(id, createInitializedChunk(response, path));
 }
 
 export function resolveError(

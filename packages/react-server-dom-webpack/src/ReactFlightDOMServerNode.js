@@ -15,6 +15,7 @@ import {
   createRequest,
   startWork,
   startFlowing,
+  serverFunctionCache,
 } from 'react-server/src/ReactFlightServer';
 
 function createDrainHandler(destination, request) {
@@ -41,4 +42,10 @@ function pipeToNodeWritable(
   startWork(request);
 }
 
-export {pipeToNodeWritable};
+function handleServerFunctions(req, res) {
+  console.log(serverFunctionCache, serverFunctionCache.get(req.params.fnId))
+  res.writeHead(200)
+  res.end()
+}
+
+export {pipeToNodeWritable, handleServerFunctions};

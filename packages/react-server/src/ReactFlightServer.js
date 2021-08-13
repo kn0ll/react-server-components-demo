@@ -96,6 +96,8 @@ function defaultErrorHandler(error: mixed) {
   console['error'](error); // Don't transform to our wrapper
 }
 
+export const serverFunctionCache = (new Map(): Map<string, Function>)
+
 export function createRequest(
   model: ReactModel,
   destination: Destination,
@@ -542,11 +544,12 @@ export function resolveModelToJSON(
     if (existingId !== undefined) {
       return serializeByServerFunctionID(existingId);
     }
-    const path = `/rpc/${Math.random()}`
+    const path = `fn-${Math.random().toString().replace('.', '')}`
     request.pendingChunks++;
     const serverFunctionId = request.nextChunkId++;
     emitServerFunctionChunk(request, serverFunctionId, path);
     writtenServerFunctions.set(value, serverFunctionId);
+    serverFunctionCache.set(path, value);
     return serializeByServerFunctionID(serverFunctionId);
   }
 

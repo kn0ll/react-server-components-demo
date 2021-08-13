@@ -398,9 +398,14 @@ export function resolveServerFunction(
   path: string,
 ): void {
   // TODO: make this call the rpc endpoint :]
-  const serverFunctionClientHandler = () => {
+  const serverFunctionClientHandler = (...args) => {
+    console.log('args2 is', JSON.stringify(args));
     return new Promise((resolve) => {
-      fetch(`http://localhost:4000/react-rpc/${path}`, { method: 'POST' }).then(
+      fetch(`http://localhost:4000/react-rpc/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+      }).then(
         (res) => res.json().then(resolve)
       )
     })

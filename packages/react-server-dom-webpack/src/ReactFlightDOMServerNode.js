@@ -44,14 +44,13 @@ function pipeToNodeWritable(
 
 function handleServerFunctions(req, res, next) {
   const fn = serverFunctionCache.get(req.params.fnId)
-  console.log(serverFunctionCache, fn)
   if (fn) {
     const success = (result) => {
       res.writeHead(200)
       res.end(JSON.stringify(result))
     }
 
-    const result = fn()
+    const result = fn(...req.body)
     if (result && result.then) {
       result.then(success);
     } else {

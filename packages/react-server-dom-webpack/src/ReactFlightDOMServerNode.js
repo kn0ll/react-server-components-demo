@@ -46,12 +46,20 @@ function handleServerFunctions(req, res, next) {
   const fn = serverFunctionCache.get(req.params.fnId)
   console.log(serverFunctionCache, fn)
   if (fn) {
-    fn();
-    res.writeHead(200)
-    res.end()
-  }
+    const success = (result) => {
+      res.writeHead(200)
+      res.end(JSON.stringify(result))
+    }
 
-  next()
+    const result = fn()
+    if (result && result.then) {
+      result.then(success);
+    } else {
+      success(result);
+    }
+  } else {
+    next()
+  }
 }
 
 export {pipeToNodeWritable, handleServerFunctions};

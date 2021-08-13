@@ -395,12 +395,21 @@ export function resolveSymbol(
 export function resolveServerFunction(
   response: Response,
   id: number,
-  handler: Function,
+  path: string,
 ): void {
+  // TODO: make this call the rpc endpoint :]
+  const serverFunctionClientHandler = () => {
+    return new Promise((resolve) => {
+      fetch(`http://localhost:4000/react-rpc/${path}`, { method: 'POST' }).then(
+        (res) => res.json().then(resolve)
+      )
+    })
+  }
+
   const chunks = response._chunks;
   // We assume that we'll always emit the server function before anything references it
   // to save a few bytes.
-  chunks.set(id, createInitializedChunk(response, handler));
+  chunks.set(id, createInitializedChunk(response, serverFunctionClientHandler));
 }
 
 export function resolveError(

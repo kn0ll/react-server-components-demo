@@ -55,7 +55,13 @@ function processFullRow(response: Response, row: string): void {
       return;
     }
     case 'F': {
-      resolveServerFunction(response, id, JSON.parse(text));
+      const serverFunctionHandler = () => {
+        return new Promise((resolve) => {
+          new Promise((r) => setTimeout(() => r(), 2500))
+            .then(() => resolve(JSON.parse(text)))
+        })
+      }
+      resolveServerFunction(response, id, serverFunctionHandler);
       return;
     }
     case 'E': {

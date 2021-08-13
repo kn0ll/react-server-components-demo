@@ -395,12 +395,12 @@ export function resolveSymbol(
 export function resolveServerFunction(
   response: Response,
   id: number,
-  path: string,
+  handler: Function,
 ): void {
   const chunks = response._chunks;
   // We assume that we'll always emit the server function before anything references it
   // to save a few bytes.
-  chunks.set(id, createInitializedChunk(response, path));
+  chunks.set(id, createInitializedChunk(response, handler));
 }
 
 export function resolveError(
